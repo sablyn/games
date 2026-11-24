@@ -1,6 +1,6 @@
 
 
-const GH_REPO = "sausi-7/games";
+const GH_REPO = "sablyn/games";
 const DEFAULT_LOCALE = "en";
 const LOCALE_STORAGE_KEY = "language";
 const I18N = {
@@ -25,6 +25,7 @@ const I18N = {
     "footer.forRandom": "for random",
     "language.english": "English",
     "language.hindi": "Hindi",
+    "language.chinese": "Chinese",
     "modal.defaultTitle": "—",
     "aria.toggleTheme": "Toggle theme",
     "aria.viewSourceGithub": "View source on GitHub",
@@ -47,6 +48,50 @@ const I18N = {
     "card.tech.html": "HTML5",
     "card.aria.play": "Play {name}",
   },
+  zh: {
+    "brand.name": "游戏合集",
+    "hero.titleLine1": "140+ 个小游戏，",
+    "hero.titleLine2": "一个合集，打开即玩。",
+    "hero.subtitle": "不断扩大的浏览器 HTML5 游戏合集，用 Phaser、Three.js 和原生 JS 打造，点卡片就能马上玩。",
+    "cta.playRandom": "随机玩一个",
+    "cta.browseAll": "浏览全部",
+    "search.placeholder": "搜游戏：名字、标签、分类…",
+    "empty.noMatches": "没有符合这个搜索的游戏。",
+    "empty.clearFilters": "清除筛选",
+    "footer.builtBy": "作者",
+    "footer.source": "源码",
+    "footer.contribute": "参与贡献",
+    "footer.licensed": "MIT 开源协议",
+    "footer.language": "语言：",
+    "footer.press": "按",
+    "footer.toSearch": "搜索",
+    "footer.toClose": "关闭",
+    "footer.forRandom": "随机",
+    "language.english": "英语",
+    "language.hindi": "印地语",
+    "language.chinese": "中文",
+    "modal.defaultTitle": "—",
+    "aria.toggleTheme": "切换主题",
+    "aria.viewSourceGithub": "在 GitHub 上查看源码",
+    "aria.filterGames": "筛选游戏",
+    "aria.categories": "分类",
+    "aria.toggleFullscreen": "切换全屏",
+    "aria.restartGame": "重新开始",
+    "aria.openInNewTab": "在新标签页打开",
+    "aria.close": "关闭",
+    "title.fullscreen": "全屏",
+    "title.restart": "重新开始",
+    "title.openInNewTab": "在新标签页打开",
+    "title.close": "关闭",
+    "title.game": "游戏",
+    "errors.registryLoad": "无法加载 <code>games/registry.json</code>。你是用 HTTP 服务的吗？试试 <code>python -m http.server</code>。",
+    "stats.games": "个游戏",
+    "filters.all": "全部",
+    "card.tech.phaser": "Phaser",
+    "card.tech.three": "Three.js",
+    "card.tech.html": "HTML5",
+    "card.aria.play": "玩 {name}",
+  },
   hi: {
     "brand.name": "गेम्स हब",
     "hero.titleLine1": "140+ गेम्स।",
@@ -68,6 +113,7 @@ const I18N = {
     "footer.forRandom": "रैंडम के लिए",
     "language.english": "अंग्रेज़ी",
     "language.hindi": "हिंदी",
+    "language.chinese": "चीनी",
     "modal.defaultTitle": "—",
     "aria.toggleTheme": "थीम बदलें",
     "aria.viewSourceGithub": "GitHub पर सोर्स देखें",
@@ -91,6 +137,27 @@ const I18N = {
     "card.aria.play": "{name} खेलें",
   },
 };
+
+// Chinese labels for the 10 categories (registry.json only carries English labels)
+const CATEGORY_LABEL_ZH = {
+  puzzle: "益智",
+  arcade: "街机",
+  shooter: "射击",
+  racing: "竞速",
+  sports: "体育",
+  platformer: "平台跳跃",
+  casual: "休闲",
+  board: "棋牌",
+  "word-quiz": "文字问答",
+  "3d": "3D",
+};
+
+// category display label in the current locale; falls back to the registry label
+function catLabel(cat, fallback) {
+  if (!cat) return fallback;
+  if (state.locale === "zh") return CATEGORY_LABEL_ZH[cat.id] || cat.label;
+  return cat.label;
+}
 
 // per-category emoji used as the visual on cards
 const CATEGORY_EMOJI_FALLBACK = {
@@ -309,7 +376,7 @@ function renderStats() {
     .slice(0, 4);
   els.stats.innerHTML = `
     <span class="stat"><span class="stat__num">${state.games.length}</span> ${t("stats.games")}</span>
-    ${top.map(({ c, n }) => `<span class="stat"><span class="stat__num">${n}</span> ${c.emoji} ${c.label}</span>`).join("")}
+    ${top.map(({ c, n }) => `<span class="stat"><span class="stat__num">${n}</span> ${c.emoji} ${catLabel(c)}</span>`).join("")}
   `;
 }
 
@@ -322,7 +389,7 @@ function renderFilters() {
   </button>`;
   const cats = state.categories
     .map((c) => `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${state.category === c.id}">
-      <span aria-hidden="true">${c.emoji}</span> ${c.label}
+      <span aria-hidden="true">${c.emoji}</span> ${catLabel(c)}
       <span class="chip__count">${counts[c.id] || 0}</span>
     </button>`)
     .join("");
@@ -374,7 +441,7 @@ function renderCard(g) {
         <h3 class="card__title">${escapeHtml(g.name)}</h3>
         <p class="card__desc">${escapeHtml(g.description || "")}</p>
         <div class="card__meta">
-          <span class="card__chip">${cat?.emoji || ""} ${cat?.label || g.category}</span>
+          <span class="card__chip">${cat?.emoji || ""} ${catLabel(cat, g.category)}</span>
           <span class="card__tech">${techLabel}</span>
         </div>
       </div>
@@ -388,7 +455,7 @@ function openGame(slug) {
   if (!g) return;
   const cat = state.categories.find((c) => c.id === g.category);
   els.modalTitle.textContent = g.name;
-  els.modalChip.textContent = `${cat?.emoji || ""} ${cat?.label || g.category}`;
+  els.modalChip.textContent = `${cat?.emoji || ""} ${catLabel(cat, g.category)}`;
   els.modalChip.style.background = CATEGORY_GRAD[g.category]?.[0] || "var(--accent)";
   els.modalFrame.setAttribute("src", g.path);
   els.modalOpen.setAttribute("href", g.path);
@@ -467,6 +534,8 @@ function escapeAttr(s) { return escapeHtml(s); }
 function loadLanguage() {
   const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
   if (saved && I18N[saved]) return saved;
+  // first visit: follow the browser language (Chinese browsers get Chinese)
+  if (typeof navigator !== "undefined" && /^zh(-|$)/i.test(navigator.language || "")) return "zh";
   return DEFAULT_LOCALE;
 }
 
